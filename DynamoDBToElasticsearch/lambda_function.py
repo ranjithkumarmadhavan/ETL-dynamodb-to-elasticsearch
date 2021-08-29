@@ -35,10 +35,15 @@ timeOut = int(os.environ['TIME_OUT'])
 sqsUrl = os.environ['SQS_URL']
 bucketName = os.environ['BUCKET_NAME']
 host = os.environ['HOST_NAME']
+tableName = os.environ['TABLE_NAME']
+uniqueId = "guid"
+index_name = os.environ['INDEX_NAME']
 bulkUrl = host + "/_bulk"
 logGroup = "existing-dynamodb-data-to-s3"
 tableName = None
 TYPE = "ES-SYNC"
+
+table = boto3.resource('dynamodb').Table(tableName)
 
 # for error handling
 filePrefix = 0
@@ -54,7 +59,6 @@ filesWithError = []
 def lambda_handler(event, context):
     try:
         logger.info(event)
-        startTime = datetime.datetime.now()
         if ("Records" in event) and (len(event["Records"]) > 0):
             logger.info("Trigger through SQS.")
             for record in event["Records"]:
@@ -68,15 +72,11 @@ def lambda_handler(event, context):
             filePrefix = 0
         response = None
         lastEvaluatedKey = None
-        tableName = "DEMO-TABLE"
-        uniqueId = "guid"
-        index_name = "DEMO-TABLE"
         fileSuffixFieldName = uniqueId
         if "lastEvaluatedKey" in event:
             response = {}
             response['LastEvaluatedKey'] = eval(json.loads(json.dumps(str(event["lastEvaluatedKey"]))))
             
-        table = boto3.resource('dynamodb').Table(tableName)
         s3Folder = "es-sync/" + tableName + "/" + currentDate + "/"
         isDataPresent = True
         while isDataPresent:
@@ -151,9 +151,7 @@ def lambda_handler(event, context):
             else:
                 logger.info("Last evaluated key - {0}".format(response['LastEvaluatedKey']))
                 del document
-                del out_file
-        endTime = datetime.datetime.now()
-        logger.info("Time taken - {0}".format(endTime - startTime))        
+                del out_file   
         if len(filesWithError) > 0:
             logger.info("File with error - {0}".format(filesWithError))
             return filesWithError
