@@ -39,9 +39,6 @@ tableName = os.environ['TABLE_NAME']
 uniqueId = "guid"
 index_name = os.environ['INDEX_NAME']
 bulkUrl = host + "/_bulk"
-logGroup = "existing-dynamodb-data-to-s3"
-tableName = None
-TYPE = "ES-SYNC"
 
 table = boto3.resource('dynamodb').Table(tableName)
 
